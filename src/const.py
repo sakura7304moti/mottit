@@ -149,11 +149,9 @@ import yaml
 # プロジェクトの相対パス
 base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-def loginData():#ログインデータ
-    yaml_path = os.path.join(base_path,'option','reddit_key.yaml')
-    with open(yaml_path) as file:
-        yml = yaml.safe_load(file)
-    return (yml['username'],yml['password'])
+def holo_df():
+    holo_df = pd.read_csv(os.path.join(base_path,"option","HoloName.csv"))
+    return holo_df
 
 def _output() -> dict:
     yaml_path = os.path.join(base_path, "option", "output.yaml")
@@ -161,7 +159,7 @@ def _output() -> dict:
         yml = yaml.safe_load(file)
     return yml
 
-def Output():
+class Output():
     def __init__(self):
         self._base_path = base_path
         self._yml = _output()
@@ -173,9 +171,9 @@ def Output():
     def database(self,fullName:str):
         path = os.path.join(self._base_path,self._yml['database'])
         self._make_folder(path)
-        return os.path.join(path,f"#{fullName}_database.csv")
+        return os.path.join(path,f"{fullName}_database.csv")
     
     def image(self,fullName:str):
-        path = os.path.join(self._base_path,self._yml['image'])
+        path = os.path.join(self._base_path,self._yml['image'],fullName)
         self._make_folder(path)
-        return os.path.join(path,fullName)
+        return path
