@@ -74,13 +74,15 @@ def parse_number(text):
 
 #画像、いいね、などを取得する
 def get_df(driver,image_driver,url):
-    driver.get(url)
-    """
-    prepare
-    """
-
     #jump to url
-    driver.get(url)
+    while(True):
+        try:
+            driver.get(url)
+        except:
+            sleep(5)
+            pass
+        else:
+            break
     print(f'url -> {url}')
 
     """
