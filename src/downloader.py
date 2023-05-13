@@ -106,7 +106,6 @@ def image_download(csv_path):
         ast.literal_eval(d) for d in tweet_df["images"]
     ]  # images str -> list[str]
 
-    tweet_df["date"] = pd.to_datetime(tweet_df["date"])  # date列をdatetime型に変換
     saved = 0
     for index, row in tqdm(
         tweet_df.iterrows(), total=len(tweet_df), desc="image DL"
@@ -124,12 +123,12 @@ def image_download(csv_path):
             # ALLにダウンロードできた場合
             if os.path.exists(save_path):
                 saved = saved + 1
-                good = row["likeCount"]
+                good = row["vote"]
                 save_good_image(good, save_path, query)  # 高評価別で画像を保存する
 
 
 def main_download():
-    for index, row in tqdm(holo_df, desc="holo"):
+    for index, row in tqdm(holo_df.iterrows(), desc="holo"):
         print(f"index -> {index}/{len(holo_df)}")
         fullName = row["FullName"]
         csv_path = output.database(fullName)

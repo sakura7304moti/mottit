@@ -1,4 +1,6 @@
 from . import scraper, downloader
 
-scraper.main_scraper()
-downloader.main_download()
+
+def mottit():
+    scraper.main_scraper()
+    downloader.main_download()
