@@ -45,53 +45,14 @@ def download(url, save_path):
                 os.remove(save_path)
 
 
-# ALLでの画像保存先を取得
-def get_save_path_all(url, query):
+# 画像保存先を取得
+def get_save_path(url, query):
     file_name = url.split("/")[-1].split("?")[0] + ".jpg"
-    save_path = os.path.join(output.image(query), "All", file_name)
+    save_path = os.path.join(output.image(query), file_name)
     folder = os.path.dirname(save_path)
     if not os.path.exists(folder):
         os.makedirs(folder)
     return save_path
-
-
-# 高評価別の画像の保存先を取得
-def get_good_save_path(good, image_path, query):
-    file_name = os.path.basename(image_path)
-    # set save path
-    if good >= 2000:
-        save_path = os.path.join(output.image(query), "Good", "2000_More", file_name)
-    if 2000 > good and good >= 1000:
-        save_path = os.path.join(output.image(query), "Good", "1000_More", file_name)
-    if 1000 > good and good >= 500:
-        save_path = os.path.join(output.image(query), "Good", "0500_More", file_name)
-    if 500 > good:
-        save_path = os.path.join(output.image(query), "Good", "0500_Under", file_name)
-    return save_path
-
-
-# 高評価で画像を保存する
-def save_good_image(good, image_path, query):
-    # get save path
-    save_path = get_good_save_path(good, image_path, query)
-    if not os.path.exists(os.path.dirname(save_path)):
-        os.makedirs(os.path.dirname(save_path))
-
-    # すでにほかの場所にあるか調べる
-    before_image_path = ""
-    for g in [2010, 1010, 510, 100]:
-        test_save_path = get_good_save_path(g, image_path, query)
-        if os.path.exists(test_save_path):
-            before_image_path = test_save_path
-
-    # ローカルにないならそのままsave_pathへコピー
-    if before_image_path == "":
-        shutil.copyfile(image_path, save_path)
-
-    # ローカルにあってsave_pathと異なるなら新しいほうに置き換え
-    if before_image_path != "" and before_image_path != save_path:
-        os.remove(before_image_path)
-        shutil.copyfile(image_path, save_path)
 
 
 # Main Function--------------------------------------------------
@@ -112,19 +73,13 @@ def image_download(csv_path):
     ):  # 画像のダウンロード&保存処理
         images = row["images"]
         for url in images:
-            save_path = get_save_path_all(url, query)
+            save_path = get_save_path(url, query)
             if not os.path.exists(save_path):
                 try:
                     download(url, save_path)
                 except Exception as e:
                     print(e)
                     pass
-
-            # ALLにダウンロードできた場合
-            if os.path.exists(save_path):
-                saved = saved + 1
-                good = row["vote"]
-                save_good_image(good, save_path, query)  # 高評価別で画像を保存する
 
 
 def main_download():

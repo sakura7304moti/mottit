@@ -19,18 +19,20 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 import urllib
+import requests
 
 from .const import get_cookie
 
-#ドライバー生成
-def init_driver(headless=True):#get chrome driver
+
+# ドライバー生成
+def init_driver(headless=True):  # get chrome driver
     options = ChromeOptions()
     if headless is True:
         print("Scraping on headless mode.")
         options.add_argument("--disable-gpu")
         options.add_argument("--no-sandbox")  # An error will occur without this line
-        options.add_argument('--window-size=900,1000')
-        #options.add_experimental_option('prefs', "'profile.default_content_setting_values.notifications': 2")
+        options.add_argument("--window-size=900,1000")
+        # options.add_experimental_option('prefs', "'profile.default_content_setting_values.notifications': 2")
         options.headless = True
     else:
         options.headless = False
@@ -50,32 +52,35 @@ def init_driver(headless=True):#get chrome driver
     driver.get("https://www.reddit.com/")
     return driver
 
-#キャラクター別URL取得
-def page_url(first_name:str,last_name:str=None):#searched page url
-    base_url='https://www.reddit.com/r/Hololewd/new'
-    if last_name == None:#fullName only?
-        tag='?f=flair_name%3A"'+first_name+'"'
+
+# キャラクター別URL取得
+def page_url(first_name: str, last_name: str = None):  # searched page url
+    base_url = "https://www.reddit.com/r/Hololewd/new"
+    if last_name == None:  # fullName only?
+        tag = '?f=flair_name%3A"' + first_name + '"'
         if first_name == "AI-Generated":
-            tag='?f=flair_name%3A"'+first_name+'%20"'
+            tag = '?f=flair_name%3A"' + first_name + '%20"'
     else:
-        tag='?f=flair_name%3A"'+first_name+'%20'+last_name+'"'
-        if first_name == 'Laplus' and last_name == 'Darknesss':
-            tag='?f=flair_name%3A"'+'La%2B'+'%20'+last_name+'"'
-    replace_url = base_url+tag
+        tag = '?f=flair_name%3A"' + first_name + "%20" + last_name + '"'
+        if first_name == "Laplus" and last_name == "Darknesss":
+            tag = '?f=flair_name%3A"' + "La%2B" + "%20" + last_name + '"'
+    replace_url = base_url + tag
     return replace_url
+
 
 def parse_number(text):
     if text.isdigit():
         return int(text)
-    elif text[-1] == 'k':
+    elif text[-1] == "k":
         return int(float(text[:-1])) * 1000
     else:
         return int(float(text))
 
-#画像、いいね、などを取得する
-def get_df(driver,image_driver,url):
-    #jump to url
-    while(True):
+
+# 画像、いいね、などを取得する
+def get_df(driver, image_driver, url):
+    # jump to url
+    while True:
         try:
             driver.get(url)
         except:
@@ -83,7 +88,7 @@ def get_df(driver,image_driver,url):
             pass
         else:
             break
-    print(f'url -> {url}')
+    print(f"url -> {url}")
 
     """
     scroll
@@ -98,23 +103,23 @@ def get_df(driver,image_driver,url):
         sleep(0.25)
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         sleep(0.25)
-        print(f'\r scroll {i+1}/{sc}',end="")
-    print('OK!')
+        print(f"\r scroll {i+1}/{sc}", end="")
+    print("OK!")
     """
     get cards
     """
-    #get card
-    cards = driver.find_elements(By.XPATH,"//div[@data-testid='post-container']")
-    print(f'cards count -> {len(cards)}')
+    # get card
+    cards = driver.find_elements(By.XPATH, "//div[@data-testid='post-container']")
+    print(f"cards count -> {len(cards)}")
 
     """
     for card in cards:
     """
     tweets = []
-    for index,card in tqdm(enumerate(cards),total=len(cards)):
+    for index, card in tqdm(enumerate(cards), total=len(cards)):
         try:
-            #page url
-            image_base_links = card.find_elements(By.TAG_NAME,"a")
+            # page url
+            image_base_links = card.find_elements(By.TAG_NAME, "a")
             image_base_link = ""
             for image_base in image_base_links:
                 try:
@@ -123,55 +128,73 @@ def get_df(driver,image_driver,url):
                 except:
                     pass
 
-            #expands click
+            # expands click
             try:
-                image_driver.find_element(By.XPATH,"//div[@data-adclicklocation='title']").click()
+                image_driver.find_element(
+                    By.XPATH, "//div[@data-adclicklocation='title']"
+                ).click()
             except:
                 pass
 
             if image_base_link != "":
                 image_driver.get(image_base_link)
 
-                #image link
+                # image link
                 image_links = []
                 try:
-                    soup = BeautifulSoup(image_driver.page_source, 'html.parser')
-                    for a in soup.find_all(name="a",attrs={"rel":"noopener noreferrer"}):
-                        link = a.get('href')
-                        if '.jpg' in link or '.png' in link:
+                    soup = BeautifulSoup(image_driver.page_source, "html.parser")
+                    for a in soup.find_all(
+                        name="a", attrs={"rel": "noopener noreferrer"}
+                    ):
+                        link = a.get("href")
+                        if ".jpg" in link or ".png" in link:
                             image_links.append(link)
                 except:
                     pass
 
-                #vote
+                # vote
                 try:
-                    container = image_driver.find_element(By.XPATH,"//div[@data-testid='post-container']")
-                    vote_element = container.find_element(By.XPATH,".//div//div//div")
+                    container = image_driver.find_element(
+                        By.XPATH, "//div[@data-testid='post-container']"
+                    )
+                    vote_element = container.find_element(By.XPATH, ".//div//div//div")
                     vote = parse_number(vote_element.text)
                 except:
                     vote = 0
 
-                #video_link
-                video_links=[]
+                # video_link
+                video_links = []
                 try:
-                    soup = BeautifulSoup(image_driver.page_source, 'html.parser')
+                    soup = BeautifulSoup(image_driver.page_source, "html.parser")
                     for a in soup.find_all(name="source"):
-                        link = a.get('src')
+                        link = a.get("src")
                         video_links.append(link)
                 except:
                     pass
 
-                #result
-                tweet = [
-                    image_base_link,
-                    image_links,
-                    video_links,
-                    vote
-                ]
+                # result
+                tweet = [image_base_link, image_links, video_links, vote]
                 tweets.append(tweet)
         except Exception as e:
-            print(f'err index : {index}  ',end='')
+            print(f"err index : {index}  ", end="")
             print(e)
 
-    tweet_df = pd.DataFrame(tweets,columns=["url","images","videos","vote"])
+    tweet_df = pd.DataFrame(tweets, columns=["url", "images", "videos", "vote"])
     return tweet_df
+
+
+def message(text: str):
+    try:
+        # 取得したTokenを代入
+        line_notify_token = "bLg2L6w7MhUXm5eG1Pyz6jB5IJ8PVU3anYX5FbjUbSc"
+
+        # 送信したいメッセージ
+        message = text
+
+        # Line Notifyを使った、送信部分
+        line_notify_api = "https://notify-api.line.me/api/notify"
+        headers = {"Authorization": f"Bearer {line_notify_token}"}
+        data = {"message": f"{message}"}
+        requests.post(line_notify_api, headers=headers, data=data)
+    except:
+        pass
