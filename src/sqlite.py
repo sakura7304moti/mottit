@@ -27,6 +27,9 @@ cur = conn.cursor()
 # 大文字部はSQL文。小文字でも問題ない。
 cur.execute(
     """CREATE TABLE IF NOT EXISTS reddit(
+            fullName STIRNG,
+            firstName STRING,
+            lastName STRING,
             url STRING,
             images STRING,
             videos STRING,
@@ -63,6 +66,9 @@ def update(fullName: str, firstName: str, lastName: str):
 
     # csv読み込み
     csv_path = output.database(fullName)
+    fullName = fullName.replace("'", "")
+    firstName = firstName.replace("'", "")
+    lastName = lastName.replace("'", "")
     df = pd.read_csv(csv_path)
 
     # レコードの存在をチェックするためのクエリを作成する
@@ -210,18 +216,26 @@ UPDATE ALL
 
 
 def update_all():
-    df = const.holo_df()
-    for index, row in df.iterrows():
-        message(f"update start {row.FullName}")
-        print(f"index {index + 1}/{len(df)}")
-        fullName = row.FullName
-        firstName = row.FirstName
-        lastName = row.LastName
+    try:
+        df = const.holo_df()
+        for index, row in df.iterrows():
+            message(f"update start {row.FullName}")
+            print(f"index {index + 1}/{len(df)}")
+            fullName = row.FullName
+            firstName = row.FirstName
+            lastName = row.LastName
 
-        if type(firstName) == float:
-            firstName = ""
-        if type(lastName) == float:
-            lastName = ""
+            if type(firstName) == float:
+                firstName = ""
+            if type(lastName) == float:
+                lastName = ""
 
-        update(fullName, firstName, lastName)
-        message(f"update end {row.FullName}")
+            update(
+                fullName,
+                firstName,
+                lastName,
+            )
+            message(f"update end {row.FullName}")
+    except Exception as e:
+        print(e)
+        utils.message(e)
